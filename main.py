@@ -30,7 +30,7 @@ def save_selected_cases(name, solution, full_df):
     print(f"📁 Saved selected cases for {name} to {output_path}")
 
 def main():
-    dataset_path = "datasets/generated_datasets/large_realistic_dataset.csv"
+    dataset_path = "datasets/generated_datasets/small_realistic_dataset.csv"
     df_full = pd.read_csv(dataset_path)
     coverage_matrix, time_array = load_dataset(dataset_path)
     total_tests = coverage_matrix.shape[0]
