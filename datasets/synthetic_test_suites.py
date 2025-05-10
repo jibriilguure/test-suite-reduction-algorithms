@@ -1,14 +1,14 @@
 import pandas as pd
 import random
+import os
 
 # --------- CONFIG ---------
-NUM_MODULES = 40
 SIZES = {
-    "small": 1000,
-    "medium": 5000,
-    "large": 10000
+    "small": {"cases": 1000, "modules": 40},
+    "medium": {"cases": 5000, "modules": 80},
+    "large": {"cases": 10000, "modules": 120}
 }
-MODULES_PER_TEST = 1  # Only 1 module per test case
+MODULES_PER_TEST = 1  # Still covering only one module per test for now
 
 # --------- Generate Base Dataset ---------
 def generate_test_cases(num_cases, num_modules):
@@ -29,13 +29,17 @@ def generate_test_cases(num_cases, num_modules):
     return df[cols].reset_index(drop=True)
 
 # --------- MAIN ---------
-for label, total_tests in SIZES.items():
-    print(f"\n🚀 Generating {label} dataset with {total_tests} unique tests...")
+os.makedirs("generated_datasets", exist_ok=True)
 
-    df_final = generate_test_cases(num_cases=total_tests, num_modules=NUM_MODULES)
+for label, config in SIZES.items():
+    num_cases = config["cases"]
+    num_modules = config["modules"]
+    print(f"\n🚀 Generating {label} dataset with {num_cases} tests and {num_modules} modules...")
+
+    df_final = generate_test_cases(num_cases=num_cases, num_modules=num_modules)
 
     output_path = f"generated_datasets/{label}_realistic_dataset.csv"
     df_final.to_csv(output_path, index=False)
     print(f"✅ Saved {label} dataset to {output_path} ({len(df_final)} rows)")
 
-print("\n🎉 All datasets with only one module per test generated successfully!")
+print("\n🎉 All datasets with scaled module counts generated successfully!")
