@@ -4,7 +4,10 @@ from utils import fitness
 
 
 class GA_Optimizer:
-    def __init__(self, coverage_matrix, time_array, pop_size=50, generations=100, early_stop_patience=10):
+    def __init__(self, coverage_matrix,
+                 time_array,
+                 pop_size=5,
+                 generations=10, early_stop_patience=3):
         self.coverage_matrix = coverage_matrix
         self.time_array = time_array
         self.pop_size = pop_size

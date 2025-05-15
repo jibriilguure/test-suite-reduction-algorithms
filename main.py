@@ -6,7 +6,7 @@ import pandas as pd
 from algorithms.aco import ACO_Optimizer
 from algorithms.ga import GA_Optimizer
 from algorithms.pso import PSO_Optimizer
-from utils import fitness, is_full_coverage, load_dataset
+from utils import  load_dataset
 
 # --- Main Execution ---
 
@@ -21,7 +21,7 @@ def print_results(name, solution, coverage_matrix, time_array, total_tests, elap
     print(f"- Selected Test Cases: {selected} / {total_tests}")
     print(f"- Reduction Ratio: {reduction_ratio:.2f}%")
     print(f"- Coverage: {len(covered_modules)} / {coverage_matrix.shape[1]}")
-    print(f"- Time Elapsed: {elapsed_time:.2f} seconds")
+    print(f"- Time Elapsed: {elapsed_time:.3f} seconds")  # the time will show like 0.003 or sm becouse ga is so fast it shows 0.00
 
 def save_selected_cases(name, solution, full_df):
     selected_df = full_df[solution].copy().reset_index(drop=True)
@@ -30,7 +30,7 @@ def save_selected_cases(name, solution, full_df):
     print(f"📁 Saved selected cases for {name} to {output_path}")
 
 def main():
-    dataset_path = "datasets/generated_datasets/small_realistic_dataset.csv"
+    dataset_path = ("datasets/generated_datasets/small_realistic_dataset.csv")
     df_full = pd.read_csv(dataset_path)
     coverage_matrix, time_array = load_dataset(dataset_path)
     total_tests = coverage_matrix.shape[0]

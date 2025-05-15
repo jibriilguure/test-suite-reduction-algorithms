@@ -4,15 +4,20 @@ import pandas as pd
 def fitness(solution, coverage_matrix, time_array):
     if not is_full_coverage(solution, coverage_matrix):
         return float('inf')
-    else:
-        return sum(time_array[i] for i in range(len(solution)) if solution[i])
+    return sum(time_array[i] for i, selected in enumerate(solution) if selected)
 
-def is_full_coverage(solution, coverage_matrix):
-    covered_modules = set()
-    for i, selected in enumerate(solution):
-        if selected:
-            covered_modules.update(j for j, covers in enumerate(coverage_matrix[i]) if covers)
-    return len(covered_modules) == coverage_matrix.shape[1]
+
+# slower
+# def is_full_coverage(solution, coverage_matrix):
+#     covered_modules = set()
+#     for i, selected in enumerate(solution):
+#         if selected:
+#             covered_modules.update(j for j, covers in enumerate(coverage_matrix[i]) if covers)
+#     return len(covered_modules) == coverage_matrix.shape[1]
+
+#this fn is faster 
+def is_full_coverage(sol: np.ndarray, cov_bool: np.ndarray) -> bool:
+    return cov_bool[sol].any(axis=0).all()
 
 def load_dataset(file_path):
     df = pd.read_csv(file_path)
