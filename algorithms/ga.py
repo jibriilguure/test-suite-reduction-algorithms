@@ -62,7 +62,7 @@ class GA_Optimizer:
                 no_improvement += 1
 
             if no_improvement >= self.early_stop_patience:
-                print(f"⏹️ Early stopping at generation {generation + 1}")
+                print(f"GA Early stopping at generation {generation + 1}")
                 break
 
             next_population = [population[0]]  # Elitism: keep best

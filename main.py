@@ -19,6 +19,7 @@ def print_results(name, solution, coverage_matrix, time_array, total_tests, elap
             covered_modules.update(j for j, covers in enumerate(coverage_matrix[i]) if covers)
     print(f"\n{name} Results:")
     print(f"- Selected Test Cases: {selected} / {total_tests}")
+    print(f"- removed Test Cases: {total_tests - selected}")
     print(f"- Reduction Ratio: {reduction_ratio:.2f}%")
     print(f"- Coverage: {len(covered_modules)} / {coverage_matrix.shape[1]}")
     print(f"- Time Elapsed: {elapsed_time:.3f} seconds")  # the time will show like 0.003 or sm becouse ga is so fast it shows 0.00
@@ -77,7 +78,7 @@ def main():
     df = pd.DataFrame(results, columns=["Algorithm", "Selected", "Total", "ReductionRatio", "Coverage", "TimeElapsed"])
     os.makedirs("results", exist_ok=True)
     df.to_csv("results/experiment_log.csv", index=False)
-    print("\n✅ Results saved to results/experiment_log.csv")
+    print("\nResults saved to results/experiment_log.csv")
 
 if __name__ == "__main__":
     main()

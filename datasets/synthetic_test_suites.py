@@ -3,57 +3,84 @@ import random
 import os
 
 # --------- CONFIG ---------
-SIZES = {
-    "small": {"cases": 1000, "modules": 40},
-    "medium": {"cases": 5000, "modules": 80},
-    "large": {"cases": 10000, "modules": 120}
+DATASET_CONFIGS = {
+    "small":  {"total": 1000, "redundancy": 0.10, "modules": 2000},
+    "medium": {"total": 3000, "redundancy": 0.20, "modules": 4800},
+    "large":  {"total": 5000, "redundancy": 0.30, "modules": 8000}
 }
 
-MODULES_PER_TEST_RANGE = (1, 40)  # Random 1 to 3 modules
-REDUNDANCY_PERCENT = 0.1  # 10% of test cases will be redundant
+# Adjustable module coverage range
+MODULES_PER_TEST_RANGE = (1 , 3)
 
-# --------- Generate Dataset with Redundancy ---------
-def generate_test_cases(num_cases, num_modules, redundancy_percent):
-    unique_cases = int(num_cases * (1 - redundancy_percent))
-    redundant_cases = num_cases - unique_cases
-    data = []
+# --------- Helper Functions ---------
+def format_module_name(index):
+    return f"T-module-{index+1:04d}"
 
-    # Step 1: Generate unique test cases
-    for _ in range(unique_cases):
-        row = {f"covers_module_{j+1}": 0 for j in range(num_modules)}
-        num_modules_covered = random.randint(*MODULES_PER_TEST_RANGE)
-        selected_modules = random.sample(range(num_modules), num_modules_covered)
-        for m in selected_modules:
-            row[f"covers_module_{m+1}"] = 1
-        row["time_to_execute"] = round(random.uniform(0.2, 5.0), 2)
-        row["priority"] = random.choice(["High", "Medium", "Low"])
-        data.append(row)
+def generate_unique_case(module_names):
+    row = {mod: 0 for mod in module_names}
+    num_covered = random.randint(*MODULES_PER_TEST_RANGE)
+    selected = random.sample(module_names, num_covered)
+    for mod in selected:
+        row[mod] = 1
+    row["time_to_execute"] = round(random.uniform(0.2, 5.0), 2)
+    row["priority"] = random.choice(["High", "Medium", "Low"])
+    return row
 
-    # Step 2: Add redundant (copied) test cases from existing ones
-    for _ in range(redundant_cases):
-        original = random.choice(data).copy()
-        # You can optionally vary time/priority to simulate slight variation
+def generate_dataset(total, redundancy, num_modules):
+    num_unique = int(total * (1 - redundancy))
+    num_duplicates = total - num_unique
+
+    module_names = [format_module_name(i) for i in range(num_modules)]
+    unique_cases = [generate_unique_case(module_names) for _ in range(num_unique)]
+
+    # Ensure all modules are covered at least once
+    covered_modules = set()
+    for case in unique_cases:
+        covered_modules.update(
+            int(col.split("-")[-1]) - 1
+            for col, val in case.items() if col.startswith("T-module-") and val == 1
+        )
+
+    all_modules = set(range(num_modules))
+    missing_modules = list(all_modules - covered_modules)
+
+    for m in missing_modules:
+        patch = {mod: 0 for mod in module_names}
+        patch[module_names[m]] = 1
+        patch["time_to_execute"] = round(random.uniform(0.2, 5.0), 2)
+        patch["priority"] = random.choice(["High", "Medium", "Low"])
+        unique_cases.append(patch)
+
+    # Final data construction
+    data = unique_cases.copy()
+
+    # Add duplicates
+    for _ in range(num_duplicates):
+        original = random.choice(unique_cases).copy()
         original["time_to_execute"] = round(original["time_to_execute"] + random.uniform(-0.1, 0.1), 2)
         original["priority"] = random.choice(["High", "Medium", "Low"])
         data.append(original)
 
+    # Build DataFrame
     df = pd.DataFrame(data)
-    df.insert(0, "test_id", [f"TC_{i:05d}" for i in range(1, len(df) + 1)])
-    cols = ["test_id", "time_to_execute", "priority"] + [col for col in df.columns if col.startswith("covers_module_")]
-    return df[cols].reset_index(drop=True)
+    df.insert(0, "test_id", [f"TC_{i+1:05d}" for i in range(len(data))])
+
+    # Reorder columns
+    fixed_cols = ["test_id", "time_to_execute", "priority"]
+    module_cols = [col for col in df.columns if col.startswith("T-module-")]
+    df = df[fixed_cols + module_cols]
+
+    return df
 
 # --------- MAIN ---------
-os.makedirs("generated_datasets", exist_ok=True)
+output_dir = "generated_datasets"
+os.makedirs(output_dir, exist_ok=True)
 
-for label, config in SIZES.items():
-    num_cases = config["cases"]
-    num_modules = config["modules"]
-    print(f"\n🚀 Generating {label} dataset with redundancy...")
+generated_files = []
 
-    df_final = generate_test_cases(num_cases, num_modules, REDUNDANCY_PERCENT)
-
-    output_path = f"generated_datasets/{label}_realistic_dataset.csv"
-    df_final.to_csv(output_path, index=False)
-    print(f"✅ Saved {label} dataset to {output_path} ({len(df_final)} rows)")
-
-print("\n🎉 All datasets with intentional redundancy generated successfully!")
+for label, config in DATASET_CONFIGS.items():
+    df = generate_dataset(config["total"], config["redundancy"], config["modules"])
+    file_path = f"{output_dir}/{label}_realistic_dataset.csv"
+    df.to_csv(file_path, index=False)
+    generated_files.append((label, file_path, df.shape))
+    print(f"✅ {label.capitalize()} dataset generated at: {file_path} ({df.shape[0]} rows, {df.shape[1] - 3} modules)")
